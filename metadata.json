@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Brevita",
+  "description": "A rapid news intelligence summarizer offering 30-second briefings and OSINT-grade analysis using Gemini.",
+  "requestFramePermissions": []
+}
