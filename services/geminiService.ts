@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT } from "../constants";
 import { UserInput, BrevitaResponse } from "../types";
 
 const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 
@@ -18,7 +18,7 @@ function parseRobustJSON(str: string): any {
   // 2. Find the outer JSON object boundaries
   const firstOpen = cleanStr.indexOf('{');
   const lastClose = cleanStr.lastIndexOf('}');
-  
+
   if (firstOpen !== -1 && lastClose !== -1) {
     cleanStr = cleanStr.substring(firstOpen, lastClose + 1);
   }
@@ -30,45 +30,45 @@ function parseRobustJSON(str: string): any {
     console.warn("Initial JSON parse failed, attempting strict sanitization...", initialError.message);
 
     try {
-        let fixed = '';
-        let inString = false;
-        let isEscaped = false;
-    
-        for (let i = 0; i < cleanStr.length; i++) {
-          const char = cleanStr[i];
-          
-          if (inString) {
-            if (char === '\\') {
-                isEscaped = !isEscaped;
-                fixed += char;
-            } else if (char === '"' && !isEscaped) {
-                inString = false;
-                fixed += char;
-            } else {
-                isEscaped = false;
-                // Escape control characters that are invalid in JSON strings
-                if (char === '\n') fixed += '\\n';
-                else if (char === '\r') fixed += '\\r';
-                else if (char === '\t') fixed += '\\t';
-                else if (char.charCodeAt(0) < 32) {
-                    // Skip other control chars
-                } else {
-                    fixed += char;
-                }
-            }
-          } else {
-            if (char === '"') {
-                inString = true;
-            }
+      let fixed = '';
+      let inString = false;
+      let isEscaped = false;
+
+      for (let i = 0; i < cleanStr.length; i++) {
+        const char = cleanStr[i];
+
+        if (inString) {
+          if (char === '\\') {
+            isEscaped = !isEscaped;
             fixed += char;
+          } else if (char === '"' && !isEscaped) {
+            inString = false;
+            fixed += char;
+          } else {
+            isEscaped = false;
+            // Escape control characters that are invalid in JSON strings
+            if (char === '\n') fixed += '\\n';
+            else if (char === '\r') fixed += '\\r';
+            else if (char === '\t') fixed += '\\t';
+            else if (char.charCodeAt(0) < 32) {
+              // Skip other control chars
+            } else {
+              fixed += char;
+            }
           }
+        } else {
+          if (char === '"') {
+            inString = true;
+          }
+          fixed += char;
         }
-        return JSON.parse(fixed);
+      }
+      return JSON.parse(fixed);
     } catch (sanitizationError) {
-        // If it still fails, throw the original or new error
-        console.error("Sanitization failed:", sanitizationError);
-        console.log("Failed Text:", str);
-        throw new Error("The AI response was not in the expected JSON format. Please try again.");
+      // If it still fails, throw the original or new error
+      console.error("Sanitization failed:", sanitizationError);
+      console.log("Failed Text:", str);
+      throw new Error("The AI response was not in the expected JSON format. Please try again.");
     }
   }
 }
@@ -107,7 +107,7 @@ ARTICLE:
 ${input.article}
 `.trim();
   }
-  
+
   const config: any = {
     systemInstruction: SYSTEM_PROMPT,
   };
@@ -117,20 +117,20 @@ ${input.article}
     // When using tools, we cannot enforce responseMimeType: 'application/json' strictly
     // in the same way as text-only requests. We rely on the Prompt's instruction.
   } else {
-     config.responseMimeType = 'application/json';
+    config.responseMimeType = 'application/json';
   }
 
   try {
-   const response = await ai.models.generateContent({
-  model: 'gemini-2.0-flash',
-  contents: [
-    {
-      role: 'user',
-      parts: [{ text: userMessage }]
-    }
-  ],
-  config: config
-});
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: userMessage }]
+        }
+      ],
+      config: config
+    });
 
 
     const text = response.text;
@@ -139,7 +139,7 @@ ${input.article}
     }
 
     const parsedResponse = parseRobustJSON(text) as BrevitaResponse;
-      
+
     // Validate critical fields exist to prevent UI crashes
     if (!parsedResponse.meta) {
       throw new Error("Incomplete JSON structure received.");

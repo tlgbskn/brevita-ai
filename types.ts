@@ -21,20 +21,6 @@ export interface MilitaryModeData {
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | string;
   theater_tags: string[];
   domain_tags: string[];
-  commander_brief: string;
-}
-
-// Support for Google Search Grounding Metadata
-export interface GroundingChunk {
-  web?: {
-    uri: string;
-    title: string;
-  };
-}
-
-export interface BrevitaResponse {
-  meta: MetaData;
-  summary_30s: string; // Key kept for backward compatibility, but content varies by length
   key_points: string[];
   context_notes: string;
   bias_or_uncertainty: string;
