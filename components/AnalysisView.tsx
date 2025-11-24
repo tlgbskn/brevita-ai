@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrevitaResponse, OutputLanguage } from '../types';
+import { useState } from 'react';
+import { BrevitaResponse } from '../types';
 import { ShieldAlert, Info, List, Clock, Target, Eye, Zap, Activity, Share2, Copy, Check, Twitter, Download, FileText, Map, Globe, Printer, FileCode, ExternalLink } from 'lucide-react';
 import { UI_TRANSLATIONS } from '../constants';
 
@@ -7,13 +7,14 @@ interface AnalysisViewProps {
   data: BrevitaResponse;
 }
 
-const AnalysisView: React.FC<AnalysisViewProps> = ({ data }) => {
+const AnalysisView = ({ data }: AnalysisViewProps) => {
   const isMilitary = data.military_mode?.is_included;
   const [copied, setCopied] = useState(false);
 
-  // Determine language (default to EN if missing)
-  const lang = (data.meta.output_language as OutputLanguage) || OutputLanguage.EN;
-  const t = UI_TRANSLATIONS[lang as keyof typeof UI_TRANSLATIONS] || UI_TRANSLATIONS.EN;
+  // Determine language safely
+  const rawLang = data.meta.output_language?.toUpperCase() || 'EN';
+  const lang = (rawLang in UI_TRANSLATIONS ? rawLang : 'EN') as keyof typeof UI_TRANSLATIONS;
+  const t = UI_TRANSLATIONS[lang];
 
   const generateShareableText = () => {
     const { meta, summary_30s, key_points } = data;
@@ -320,8 +321,8 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ data }) => {
   );
 };
 
-const MilitaryPanel: React.FC<{ data: BrevitaResponse['military_mode'], lang: OutputLanguage }> = ({ data, lang }) => {
-  const t = UI_TRANSLATIONS[lang as keyof typeof UI_TRANSLATIONS] || UI_TRANSLATIONS.EN;
+const MilitaryPanel = ({ data, lang }: { data: BrevitaResponse['military_mode'], lang: keyof typeof UI_TRANSLATIONS }) => {
+  const t = UI_TRANSLATIONS[lang];
 
   const getRiskColor = (risk: string) => {
     const r = risk?.toUpperCase() || 'LOW';
