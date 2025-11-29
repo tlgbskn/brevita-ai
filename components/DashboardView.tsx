@@ -8,6 +8,7 @@ import {
     LayoutDashboard, TrendingUp, Globe, Clock, FileText,
     ShieldAlert, Activity, Map
 } from 'lucide-react';
+import GeoMap from './GeoMap';
 
 interface DashboardViewProps {
     history: HistoryItem[];
@@ -41,7 +42,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
             .sort((a, b) => b.value - a.value);
     }, [history]);
 
-    // 3. Prepare Region/Country Data (Bar Chart)
+    // 3. Prepare Region/Country Data (Bar Chart) - KEEPING FOR REFERENCE IF NEEDED, BUT REPLACING VISUAL WITH MAP
     const regionData = useMemo(() => {
         const counts: Record<string, number> = {};
         history.forEach(item => {
@@ -165,25 +166,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                     </div>
                 </div>
 
-                {/* Geopolitical Focus */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                {/* Geopolitical Focus (MAP) */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <Map size={18} className="text-slate-400" />
-                        Geopolitical Focus (Top Regions)
+                        <Globe size={18} className="text-slate-400" />
+                        Global Intelligence Map
                     </h3>
-                    <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={regionData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.2} />
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                <Tooltip
-                                    cursor={{ fill: 'transparent' }}
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                />
-                                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="flex-grow min-h-[300px] relative rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+                        <GeoMap history={history} />
                     </div>
                 </div>
 

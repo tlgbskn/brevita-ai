@@ -85,6 +85,10 @@ CATEGORIZATION RULES
 - "tags": You MUST generate 3-5 relevant tags (short, lowercase keywords) that describe the specific topic, country, or entity.
 - "region": The primary geopolitical region mentioned (e.g., "Middle East", "Europe", "Asia-Pacific", "North America").
 - "country": The primary country of focus (e.g., "Turkey", "USA", "Ukraine"). If multiple, choose the most central one.
+- "entities": Array of objects identifying key entities. Each object must have:
+    - "name": Name of the entity.
+    - "type": One of ["person", "org", "location", "event", "other"].
+    - "sentiment": One of ["positive", "negative", "neutral"] (contextual sentiment).
 
 ----------------------------------------------------------------------
 MILITARY MODE RULES

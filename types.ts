@@ -1,3 +1,9 @@
+export interface Entity {
+  name: string;
+  type: 'person' | 'org' | 'location' | 'event' | 'other';
+  sentiment?: 'positive' | 'negative' | 'neutral';
+}
+
 export interface MetaData {
   title: string;
   source: string;
@@ -10,6 +16,7 @@ export interface MetaData {
   tags?: string[];
   region?: string;
   country?: string;
+  entities?: Entity[];
 }
 
 export interface MilitaryModeData {
@@ -21,7 +28,6 @@ export interface MilitaryModeData {
   operational_implications: string;
   tech_and_AI_relevance: string;
   watchpoints_for_commanders: string[];
-  // New fields
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | string;
   theater_tags: string[];
   domain_tags: string[];
@@ -38,13 +44,13 @@ export interface GroundingChunk {
 
 export interface BrevitaResponse {
   meta: MetaData;
-  summary_30s: string; // Key kept for backward compatibility, but content varies by length
+  summary_30s: string;
   key_points: string[];
   context_notes: string;
   bias_or_uncertainty: string;
   military_mode: MilitaryModeData;
   pdf_html: string;
-  groundingChunks?: GroundingChunk[]; // Added for search sources
+  groundingChunks?: GroundingChunk[];
 }
 
 export enum OutputLanguage {
