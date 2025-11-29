@@ -34,6 +34,23 @@ OUTPUT JSON SCHEMA
 You MUST return strictly valid JSON:
 
 \`\`\`json
+{
+  "meta": {
+    "title": "",
+    "source": "",
+    "date": "",
+    "url": "",
+    "mode": "",
+    "output_language": "",
+    "estimated_reading_time_seconds": 0,
+    "category": "",
+    "tags": []
+  },
+  "summary_30s": "",
+  "key_points": [],
+  "context_notes": "",
+  "bias_or_uncertainty": "",
+  "military_mode": {
     "is_included": false,
     "risk_level": "",
     "actors": [],
