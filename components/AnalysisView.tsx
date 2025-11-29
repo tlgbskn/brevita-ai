@@ -161,6 +161,16 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
                 <Clock size={16} />
                 <span>{data.meta.estimated_reading_time_seconds}s {t.read_time}</span>
               </div>
+              {data.meta.category && (
+                <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-800">
+                  {data.meta.category}
+                </span>
+              )}
+              {data.meta.tags?.map((tag, i) => (
+                <span key={i} className="text-xs text-slate-400 dark:text-slate-500 lowercase">
+                  #{tag}
+                </span>
+              ))}
               {isMilitary && (
                 <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-2 py-1 rounded border border-amber-200 dark:border-amber-800/50">
                   <ShieldAlert size={14} /> {t.military_mode}

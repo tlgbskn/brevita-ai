@@ -6,6 +6,8 @@ export interface MetaData {
   mode: string;
   output_language: string;
   estimated_reading_time_seconds: number;
+  category?: string;
+  tags?: string[];
 }
 
 export interface MilitaryModeData {

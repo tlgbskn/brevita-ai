@@ -34,21 +34,6 @@ OUTPUT JSON SCHEMA
 You MUST return strictly valid JSON:
 
 \`\`\`json
-{
-  "meta": {
-    "title": "",
-    "source": "",
-    "date": "",
-    "url": "",
-    "mode": "",
-    "output_language": "",
-    "estimated_reading_time_seconds": 30
-  },
-  "summary_30s": "",
-  "key_points": [],
-  "context_notes": "",
-  "bias_or_uncertainty": "",
-  "military_mode": {
     "is_included": false,
     "risk_level": "",
     "actors": [],
@@ -69,20 +54,6 @@ You MUST return strictly valid JSON:
 ----------------------------------------------------------------------
 RULES FOR AUTO-FILLING METADATA
 ----------------------------------------------------------------------
-- If URL is provided and user did NOT provide title/text:
-  - Extract headline from the page.
-  - Infer source as the domain (e.g., “BBC News”, “Reuters”, or “bbc.com”).
-  - Extract publication date if present.
-  - Extract article text using readability-like logic:
-    - Only main content.
-    - Remove scripts, ads, captions, share buttons, comments.
-- If extraction is incomplete, leave missing fields as empty string.
-
-----------------------------------------------------------------------
-SUMMARY RULES
-----------------------------------------------------------------------
-- Use the requested OUTPUT_LANGUAGE.
-- Adapt length based on SUMMARY_LENGTH_SECONDS:
   - 15s: ~60-80 words.
   - 30s: ~120-150 words.
   - 60s: ~250-300 words.
