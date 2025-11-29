@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { BrevitaResponse } from '../types';
 import { ShieldAlert, Info, List, Clock, Target, Eye, Zap, Activity, Share2, Copy, Check, Twitter, Download, FileText, Map, Globe, Printer, FileCode, ExternalLink } from 'lucide-react';
 import { UI_TRANSLATIONS } from '../constants';
@@ -88,7 +89,7 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert("Please allow popups to export PDF.");
+      toast.error("Please allow popups to export PDF.");
       return;
     }
 
@@ -112,9 +113,11 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
+      toast.error("Failed to copy to clipboard");
     }
   };
 
@@ -129,6 +132,7 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
       } catch (err) {
         if ((err as any).name !== 'AbortError') {
           console.error('Error sharing', err);
+          toast.error("Failed to share");
         }
       }
     } else {

@@ -2,7 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import {
   Bot, History, Sun, Moon, LogOut, LogIn, Github,
-  type AppView = 'input' | 'history' | 'result';
+  ChevronLeft, FileText, ShieldCheck, Database, CheckCircle
+} from 'lucide-react';
+import { generateAnalysis } from './services/geminiService';
+import { historyService } from './services/historyService';
+import { supabase } from './services/supabase';
+import { AuthModal } from './components/AuthModal';
+import InputForm from './components/InputForm';
+import { LoadingState } from './components/LoadingState';
+import HistoryView from './components/HistoryView';
+import AnalysisView from './components/AnalysisView';
+import { User } from '@supabase/supabase-js';
+import {
+  BrevitaResponse, HistoryItem, AnalysisMode, SummaryLength, UserInput
+} from './types';
+
+type AppView = 'input' | 'history' | 'result';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<BrevitaResponse | null>(null);
