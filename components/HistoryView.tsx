@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HistoryItem, AnalysisMode, OutputLanguage } from '../types';
-import { Trash2, Calendar, Clock, ChevronRight, History, ShieldAlert, Search, Filter } from 'lucide-react';
+import { Trash2, Calendar, Clock, ChevronRight, History, ShieldAlert, Search, Filter, Globe, Map } from 'lucide-react';
 
 interface HistoryViewProps {
   history: HistoryItem[];
@@ -201,11 +201,21 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
                       </div>
                     )}
 
-                    {/* Category & Tags */}
+                    {/* Category & Tags & Region/Country */}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {item.data.meta.category && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
                           {item.data.meta.category}
+                        </span>
+                      )}
+                      {item.data.meta.region && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                          <Globe size={10} /> {item.data.meta.region}
+                        </span>
+                      )}
+                      {item.data.meta.country && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                          <Map size={10} /> {item.data.meta.country}
                         </span>
                       )}
                       {item.data.meta.tags?.slice(0, 3).map((tag, i) => (

@@ -8,6 +8,8 @@ export interface MetaData {
   estimated_reading_time_seconds: number;
   category?: string;
   tags?: string[];
+  region?: string;
+  country?: string;
 }
 
 export interface MilitaryModeData {

@@ -170,6 +170,18 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
                   {data.meta.category}
                 </span>
               )}
+              {data.meta.region && (
+                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                  <Globe size={14} />
+                  {data.meta.region}
+                </span>
+              )}
+              {data.meta.country && (
+                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                  <Map size={14} />
+                  {data.meta.country}
+                </span>
+              )}
               {data.meta.tags?.map((tag, i) => (
                 <span key={i} className="text-xs text-slate-400 dark:text-slate-500 lowercase">
                   #{tag}

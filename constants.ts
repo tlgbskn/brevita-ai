@@ -44,7 +44,9 @@ You MUST return strictly valid JSON:
     "output_language": "",
     "estimated_reading_time_seconds": 0,
     "category": "",
-    "tags": []
+    "tags": [],
+    "region": "",
+    "country": ""
   },
   "summary_30s": "",
   "key_points": [],
@@ -79,16 +81,10 @@ RULES FOR AUTO-FILLING METADATA
 ----------------------------------------------------------------------
 CATEGORIZATION RULES
 ----------------------------------------------------------------------
-You MUST assign a "category" from this exact list:
-- Politics
-- Military
-- Tech
-- Economy
-- Health
-- Science
-- General
-
-You MUST generate 3-5 relevant "tags" (short, lowercase keywords) that describe the specific topic, country, or entity.
+- "category": You MUST assign one from this exact list: [Politics, Military, Tech, Economy, Health, Science, General].
+- "tags": You MUST generate 3-5 relevant tags (short, lowercase keywords) that describe the specific topic, country, or entity.
+- "region": The primary geopolitical region mentioned (e.g., "Middle East", "Europe", "Asia-Pacific", "North America").
+- "country": The primary country of focus (e.g., "Turkey", "USA", "Ukraine"). If multiple, choose the most central one.
 
 ----------------------------------------------------------------------
 MILITARY MODE RULES
