@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { BrevitaResponse } from '../types';
 import { ShieldAlert, Info, List, Clock, Target, Eye, Zap, Activity, Share2, Copy, Check, Twitter, Download, FileText, Map, Globe, Printer, FileCode, ExternalLink } from 'lucide-react';
 import { UI_TRANSLATIONS } from '../constants';
+import { generatePrintableHtml } from '../services/printService';
 
 interface AnalysisViewProps {
   data: BrevitaResponse;
@@ -80,271 +81,240 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
     const link = document.createElement('a');
     link.href = url;
     link.download = `brevita-briefing-${Date.now()}.${extension}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Copied to clipboard");
+    setTimeout(() => setCopied(false), 2000);
+  } catch (err) {
+    console.error('Failed to copy', err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error("Please allow popups to export PDF.");
-      return;
-    }
-
-    // Write the PDF HTML content to the new window
-    printWindow.document.write(data.pdf_html || '<html><body><h1>Error: No content generated.</h1></body></html>');
-
-    // Set the title for the PDF filename
-    printWindow.document.title = data.meta.title || "Brevita Intelligence Briefing";
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    // Delay slightly to ensure rendering before print dialog
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  };
-
-  const handleCopy = async () => {
-    const text = generateShareableText();
+const handleNativeShare = async () => {
+  const text = generateShareableText();
+  if (navigator.share) {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      toast.success("Copied to clipboard");
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.share({
+        title: data.meta.title,
+        text: text,
+      });
     } catch (err) {
-      console.error('Failed to copy', err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
-
-  const handleNativeShare = async () => {
-    const text = generateShareableText();
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: data.meta.title,
-          text: text,
-        });
-      } catch (err) {
-        if ((err as any).name !== 'AbortError') {
-          console.error('Error sharing', err);
-          toast.error("Failed to share");
-        }
+      if ((err as any).name !== 'AbortError') {
+        console.error('Error sharing', err);
+        toast.error("Failed to share");
       }
-    } else {
-      handleCopy();
     }
-  };
+  } else {
+    handleCopy();
+  }
+};
 
-  const handleTweet = () => {
-    const text = `${data.meta.title}\n\n${data.summary_30s.substring(0, 180)}...\n\nAnalysis via Brevita.ai`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-  };
+const handleTweet = () => {
+  const text = `${data.meta.title}\n\n${data.summary_30s.substring(0, 180)}...\n\nAnalysis via Brevita.ai`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+};
 
-  return (
-    <div className="animate-fade-in space-y-8 pb-12">
-      {/* Header Info */}
-      <div className="border-b border-slate-200 dark:border-slate-700 pb-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight">
-              {data.meta.title || "Untitled Intelligence Brief"}
-            </h1>
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
-              {data.meta.source && (
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
-                  {data.meta.source}
-                </span>
-              )}
-              {data.meta.date && <span>{data.meta.date}</span>}
-              <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
-                <Clock size={16} />
-                <span>{data.meta.estimated_reading_time_seconds}s {t.read_time}</span>
-              </div>
-              {data.meta.category && (
-                <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-800">
-                  {data.meta.category}
-                </span>
-              )}
-              {data.meta.region && (
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
-                  <Globe size={14} />
-                  {data.meta.region}
-                </span>
-              )}
-              {data.meta.country && (
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
-                  <Map size={14} />
-                  {data.meta.country}
-                </span>
-              )}
-              {data.meta.tags?.map((tag, i) => (
-                <span key={i} className="text-xs text-slate-400 dark:text-slate-500 lowercase">
-                  #{tag}
-                </span>
-              ))}
-              {isMilitary && (
-                <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-2 py-1 rounded border border-amber-200 dark:border-amber-800/50">
-                  <ShieldAlert size={14} /> {t.military_mode}
-                </span>
-              )}
+return (
+  <div className="animate-fade-in space-y-8 pb-12">
+    {/* Header Info */}
+    <div className="border-b border-slate-200 dark:border-slate-700 pb-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+            {data.meta.title || "Untitled Intelligence Brief"}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+            {data.meta.source && (
+              <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
+                {data.meta.source}
+              </span>
+            )}
+            {data.meta.date && <span>{data.meta.date}</span>}
+            <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
+              <Clock size={16} />
+              <span>{data.meta.estimated_reading_time_seconds}s {t.read_time}</span>
             </div>
-          </div>
-
-          {/* Share Toolbar */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 mr-2">
-              <button onClick={() => handleDownload('html')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Download HTML Source">
-                <FileCode size={18} /> <span className="sr-only">HTML</span>
-              </button>
-              <button onClick={() => handleDownload('md')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Export Markdown">
-                <Download size={18} /> <span className="sr-only">MD</span>
-              </button>
-              <button onClick={() => handleDownload('txt')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Export Text">
-                <FileText size={18} /> <span className="sr-only">TXT</span>
-              </button>
-            </div>
-
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
-              title="Export PDF"
-            >
-              <Printer size={18} />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
-
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
-              title="Copy Briefing"
-            >
-              {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-              <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
-            </button>
-
-            <button
-              onClick={handleTweet}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-500 transition-all"
-              title="Share on X (Twitter)"
-            >
-              <Twitter size={18} />
-              <span className="hidden sm:inline">Tweet</span>
-            </button>
-
-            <button
-              onClick={handleNativeShare}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 dark:bg-indigo-600 text-white hover:bg-indigo-700 dark:hover:bg-indigo-500 shadow-sm transition-all"
-              title="Share"
-            >
-              <Share2 size={18} />
-              <span className="hidden sm:inline">Share</span>
-            </button>
+            {data.meta.category && (
+              <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-800">
+                {data.meta.category}
+              </span>
+            )}
+            {data.meta.region && (
+              <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                <Globe size={14} />
+                {data.meta.region}
+              </span>
+            )}
+            {data.meta.country && (
+              <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                <Map size={14} />
+                {data.meta.country}
+              </span>
+            )}
+            {data.meta.tags?.map((tag, i) => (
+              <span key={i} className="text-xs text-slate-400 dark:text-slate-500 lowercase">
+                #{tag}
+              </span>
+            ))}
+            {isMilitary && (
+              <span className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-2 py-1 rounded border border-amber-200 dark:border-amber-800/50">
+                <ShieldAlert size={14} /> {t.military_mode}
+              </span>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Main 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Summary & Context */}
-        <div className="lg:col-span-2 space-y-8">
-
-          {/* Executive Summary */}
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <Zap className="text-yellow-500" size={20} />
-              {t.executive_summary}
-            </h2>
-            <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed text-lg">
-              {data.summary_30s.split('\n').map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </div>
-          </section>
-
-          {/* Context & Bias Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border border-blue-100 dark:border-blue-900/50">
-              <h3 className="text-blue-900 dark:text-blue-100 font-semibold mb-2 flex items-center gap-2">
-                <Info size={18} /> {t.context}
-              </h3>
-              <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed">
-                {data.context_notes}
-              </p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <h3 className="text-slate-900 dark:text-white font-semibold mb-2 flex items-center gap-2">
-                <Target size={18} /> {t.bias_check}
-              </h3>
-              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed italic">
-                "{data.bias_or_uncertainty}"
-              </p>
-            </div>
+        {/* Share Toolbar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 mr-2">
+            <button onClick={() => handleDownload('html')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Download HTML Source">
+              <FileCode size={18} /> <span className="sr-only">HTML</span>
+            </button>
+            <button onClick={() => handleDownload('md')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Export Markdown">
+              <Download size={18} /> <span className="sr-only">MD</span>
+            </button>
+            <button onClick={() => handleDownload('txt')} className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all" title="Export Text">
+              <FileText size={18} /> <span className="sr-only">TXT</span>
+            </button>
           </div>
 
-          {/* Key Points */}
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <List className="text-indigo-500 dark:text-indigo-400" size={20} />
-              {t.key_points}
-            </h2>
-            <ul className="space-y-3">
-              {data.key_points.map((point, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
-                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mt-2.5" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            title="Export PDF"
+          >
+            <Printer size={18} />
+            <span className="hidden sm:inline">PDF</span>
+          </button>
 
-          {/* Grounding/Search Sources */}
-          {data.groundingChunks && data.groundingChunks.length > 0 && (
-            <section className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Globe size={16} /> {t.verified_sources}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {data.groundingChunks.map((chunk, i) => (
-                  chunk.web ? (
-                    <a
-                      key={i}
-                      href={chunk.web.uri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors group"
-                    >
-                      <ExternalLink size={14} className="text-slate-400 group-hover:text-indigo-500" />
-                      <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{chunk.web.title}</span>
-                    </a>
-                  ) : null
-                ))}
-              </div>
-            </section>
-          )}
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            title="Copy Briefing"
+          >
+            {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+            <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
+          </button>
 
-        </div>
+          <button
+            onClick={handleTweet}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-500 transition-all"
+            title="Share on X (Twitter)"
+          >
+            <Twitter size={18} />
+            <span className="hidden sm:inline">Tweet</span>
+          </button>
 
-        {/* Right Column: Military Dashboard (Conditional) or Standard Meta */}
-        <div className="space-y-6">
-          {isMilitary ? (
-            <MilitaryPanel data={data.military_mode} lang={lang} />
-          ) : (
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t.standard_analysis}</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                {t.standard_analysis_desc}
-              </p>
-            </div>
-          )}
+          <button
+            onClick={handleNativeShare}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 dark:bg-indigo-600 text-white hover:bg-indigo-700 dark:hover:bg-indigo-500 shadow-sm transition-all"
+            title="Share"
+          >
+            <Share2 size={18} />
+            <span className="hidden sm:inline">Share</span>
+          </button>
         </div>
       </div>
     </div>
-  );
+
+    {/* Main 2-Column Grid */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left Column: Summary & Context */}
+      <div className="lg:col-span-2 space-y-8">
+
+        {/* Executive Summary */}
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <Zap className="text-yellow-500" size={20} />
+            {t.executive_summary}
+          </h2>
+          <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed text-lg">
+            {data.summary_30s.split('\n').map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+        </section>
+
+        {/* Context & Bias Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border border-blue-100 dark:border-blue-900/50">
+            <h3 className="text-blue-900 dark:text-blue-100 font-semibold mb-2 flex items-center gap-2">
+              <Info size={18} /> {t.context}
+            </h3>
+            <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed">
+              {data.context_notes}
+            </p>
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <h3 className="text-slate-900 dark:text-white font-semibold mb-2 flex items-center gap-2">
+              <Target size={18} /> {t.bias_check}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed italic">
+              "{data.bias_or_uncertainty}"
+            </p>
+          </div>
+        </div>
+
+        {/* Key Points */}
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <List className="text-indigo-500 dark:text-indigo-400" size={20} />
+            {t.key_points}
+          </h2>
+          <ul className="space-y-3">
+            {data.key_points.map((point, idx) => (
+              <li key={idx} className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mt-2.5" />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Grounding/Search Sources */}
+        {data.groundingChunks && data.groundingChunks.length > 0 && (
+          <section className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Globe size={16} /> {t.verified_sources}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {data.groundingChunks.map((chunk, i) => (
+                chunk.web ? (
+                  <a
+                    key={i}
+                    href={chunk.web.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors group"
+                  >
+                    <ExternalLink size={14} className="text-slate-400 group-hover:text-indigo-500" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{chunk.web.title}</span>
+                  </a>
+                ) : null
+              ))}
+            </div>
+          </section>
+        )}
+
+      </div>
+
+      {/* Right Column: Military Dashboard (Conditional) or Standard Meta */}
+      <div className="space-y-6">
+        {isMilitary ? (
+          <MilitaryPanel data={data.military_mode} lang={lang} />
+        ) : (
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">{t.standard_analysis}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
+              {t.standard_analysis_desc}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
 };
 
 const MilitaryPanel = ({ data, lang }: { data: BrevitaResponse['military_mode'], lang: keyof typeof UI_TRANSLATIONS }) => {
