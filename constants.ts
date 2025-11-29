@@ -77,6 +77,20 @@ RULES FOR AUTO-FILLING METADATA
 - 2–3 short paragraphs, no long sentences.
 
 ----------------------------------------------------------------------
+CATEGORIZATION RULES
+----------------------------------------------------------------------
+You MUST assign a "category" from this exact list:
+- Politics
+- Military
+- Tech
+- Economy
+- Health
+- Science
+- General
+
+You MUST generate 3-5 relevant "tags" (short, lowercase keywords) that describe the specific topic, country, or entity.
+
+----------------------------------------------------------------------
 MILITARY MODE RULES
 ----------------------------------------------------------------------
 If MODE = MILITARY:
@@ -101,6 +115,7 @@ The "pdf_html" field must contain a clean, self-contained HTML string representi
 - Summary section
 - Context + Bias sections
 - Key points
+- Category and Tags (display them near the top)
 - If military mode enabled:
   - Threat level badge
   - Commander’s brief
