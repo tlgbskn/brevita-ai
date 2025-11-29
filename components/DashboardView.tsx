@@ -133,7 +133,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         <TrendingUp size={18} className="text-slate-400" />
                         Topic Distribution
                     </h3>
-                    <div className="h-64 w-full">
+                    <div className="h-64 w-full min-h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -183,7 +183,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         <Activity size={18} className="text-slate-400" />
                         Briefing Activity (Last 30 Days)
                     </h3>
-                    <div className="h-64 w-full">
+                    <div className="h-64 w-full min-h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={timelineData}>
                                 <defs>

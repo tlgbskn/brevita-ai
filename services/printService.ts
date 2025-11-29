@@ -1,11 +1,11 @@
 import { BrevitaResponse } from '../types';
 
 export const generatePrintableHtml = (data: BrevitaResponse): string => {
-    const { meta, summary_30s, key_points, context_notes, bias_or_uncertainty, military_mode } = data;
-    const isMilitary = military_mode?.is_included;
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const { meta, summary_30s, key_points, context_notes, bias_or_uncertainty, military_mode } = data;
+  const isMilitary = military_mode?.is_included;
+  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    return `
+  return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -221,6 +221,19 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
           ${meta.country}
         </div>` : ''}
       </div>
+      
+      ${(meta.region || meta.country) ? `
+      <h2>Geographic Context</h2>
+      <div class="section-content">
+        <p>
+          <strong>Region:</strong> ${meta.region || 'N/A'} <br/>
+          <strong>Country:</strong> ${meta.country || 'N/A'}
+        </p>
+        <div style="background: #f1f5f9; padding: 1rem; border-radius: 4px; border: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">
+           [Map Visualization Placeholder - See Digital Dashboard for Interactive Map]
+        </div>
+      </div>
+      ` : ''}
 
       <h2>Executive Summary</h2>
       <div class="section-content">
