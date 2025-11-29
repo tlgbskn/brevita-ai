@@ -23,6 +23,7 @@ const GeoMap: React.FC<GeoMapProps> = ({ history, highlightCountry }) => {
                 counts[country] = (counts[country] || 0) + 1;
             }
         });
+        console.log('GeoMap Debug - Country Counts:', counts);
         return counts;
     }, [history]);
 
