@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, Github, FileText, ChevronLeft, Moon, Sun, History, Database, CheckCircle, ShieldCheck, LogIn, LogOut } from 'lucide-react';
-import InputForm from './components/InputForm';
-import AnalysisView from './components/AnalysisView';
-import { LoadingState } from './components/LoadingState';
-import HistoryView from './components/HistoryView';
-import { UserInput, BrevitaResponse, HistoryItem, AnalysisMode, SummaryLength } from './types';
-import { generateAnalysis } from './services/geminiService';
-import { historyService } from './services/historyService';
-import { supabase } from './services/supabase';
-import { AuthModal } from './components/AuthModal';
-import { User } from '@supabase/supabase-js';
-
-type AppView = 'input' | 'history' | 'result';
+import { Toaster, toast } from 'sonner';
+import {
+  Bot, History, Sun, Moon, LogOut, LogIn, Github,
+  type AppView = 'input' | 'history' | 'result';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<BrevitaResponse | null>(null);
@@ -79,12 +70,62 @@ const App: React.FC = () => {
         setHistory(items);
       } catch (e) {
         console.error("Failed to initialize local backend:", e);
+        toast.error("Failed to initialize local database");
       }
     };
     initBackend();
   }, [user]); // Reload history when user changes
 
   const toggleTheme = () => setIsDark(!isDark);
+
+  const handleReset = () => {
+    setResult(null);
+    setError(null);
+    setView('input');
+  };
+
+  const handleViewHistory = async () => {
+    setError(null);
+    try {
+      // Refresh history from DB to ensure sync
+      const items = await historyService.getAll();
+      setHistory(items);
+      setView('history');
+    } catch (err) {
+      console.error("Failed to load history:", err);
+      toast.error("Failed to load history");
+    }
+  };
+
+  const handleHistorySelect = (item: HistoryItem) => {
+    setResult(item.data);
+    setView('result');
+  };
+
+  const handleHistoryDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await historyService.delete(id);
+      setHistory(prev => prev.filter(i => i.id !== id));
+      toast.success("Briefing deleted");
+    } catch (err) {
+      console.error("Failed to delete item:", err);
+      toast.error("Failed to delete briefing");
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (window.confirm('Are you sure you want to delete all history? This action cannot be undone.')) {
+      try {
+        await historyService.clear();
+        setHistory([]);
+        toast.success("History cleared successfully");
+      } catch (err) {
+        console.error("Failed to clear history:", err);
+        toast.error("Failed to clear history");
+      }
+    }
+  };
 
   const handleAnalysis = async (input: UserInput) => {
     // Capture selection for loading screen
@@ -102,53 +143,24 @@ const App: React.FC = () => {
       setResult(data);
 
       // Async save to DB
-      const savedItem = await historyService.save(data);
-
-      // Update local state optimistically
-      setHistory(prev => [savedItem, ...prev]);
+      try {
+        const savedItem = await historyService.save(data);
+        // Update local state optimistically
+        setHistory(prev => [savedItem, ...prev]);
+        toast.success("Analysis complete and saved");
+      } catch (saveErr) {
+        console.error("Failed to save to history:", saveErr);
+        toast.warning("Analysis complete but failed to save to history");
+      }
 
       setView('result');
-    } catch (err) {
-      setError("Failed to generate analysis. Please try again or check your input.");
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to generate analysis. Please try again or check your input.";
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error(err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setResult(null);
-    setError(null);
-    setView('input');
-  };
-
-  const handleViewHistory = async () => {
-    setError(null);
-    // Refresh history from DB to ensure sync
-    const items = await historyService.getAll();
-    setHistory(items);
-    setView('history');
-  };
-
-  const handleHistorySelect = (item: HistoryItem) => {
-    setResult(item.data);
-    setView('result');
-  };
-
-  const handleHistoryDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await historyService.delete(id);
-      setHistory(prev => prev.filter(i => i.id !== id));
-    } catch (err) {
-      console.error("Failed to delete item:", err);
-    }
-  };
-
-  const handleClearHistory = async () => {
-    if (window.confirm('Are you sure you want to delete all history? This action cannot be undone.')) {
-      await historyService.clear();
-      setHistory([]);
     }
   };
 
@@ -320,6 +332,7 @@ const App: React.FC = () => {
       </footer>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <Toaster position="top-center" richColors />
     </div>
   );
 };

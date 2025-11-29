@@ -14,6 +14,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
   const [filterMode, setFilterMode] = useState<'ALL' | AnalysisMode>('ALL');
   const [filterLang, setFilterLang] = useState<'ALL' | OutputLanguage>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const filteredHistory = history.filter(item => {
     const matchesSearch = (item.data.meta.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -33,7 +35,21 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
       ? true
       : item.data.meta.category === filterCategory;
 
-    return matchesSearch && matchesMode && matchesLang && matchesCategory;
+    const matchesDate = (() => {
+      if (!startDate && !endDate) return true;
+      const itemDate = new Date(item.timestamp);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      if (start) start.setHours(0, 0, 0, 0);
+      if (end) end.setHours(23, 59, 59, 999);
+
+      if (start && itemDate < start) return false;
+      if (end && itemDate > end) return false;
+      return true;
+    })();
+
+    return matchesSearch && matchesMode && matchesLang && matchesCategory && matchesDate;
   });
 
   if (history.length === 0) {
@@ -78,7 +94,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
           />
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           <select
             className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
             value={filterCategory}
@@ -113,6 +129,25 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
             <option value={OutputLanguage.EN}>English</option>
             <option value={OutputLanguage.TR}>Turkish</option>
           </select>
+
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+            <Calendar size={16} className="text-slate-400" />
+            <input
+              type="date"
+              className="bg-transparent text-sm text-slate-700 dark:text-slate-300 outline-none w-32"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              placeholder="Start Date"
+            />
+            <span className="text-slate-400">-</span>
+            <input
+              type="date"
+              className="bg-transparent text-sm text-slate-700 dark:text-slate-300 outline-none w-32"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              placeholder="End Date"
+            />
+          </div>
         </div>
       </div>
 
