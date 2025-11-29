@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import {
   Bot, History, Sun, Moon, LogOut, LogIn, Github,
-  ChevronLeft, FileText, ShieldCheck, Database, CheckCircle
+  ChevronLeft, FileText, ShieldCheck, Database, CheckCircle, LayoutDashboard
 } from 'lucide-react';
 import { generateAnalysis } from './services/geminiService';
 import { historyService } from './services/historyService';
@@ -12,12 +12,13 @@ import InputForm from './components/InputForm';
 import { LoadingState } from './components/LoadingState';
 import HistoryView from './components/HistoryView';
 import AnalysisView from './components/AnalysisView';
+import DashboardView from './components/DashboardView';
 import { User } from '@supabase/supabase-js';
 import {
   BrevitaResponse, HistoryItem, AnalysisMode, SummaryLength, UserInput
 } from './types';
 
-type AppView = 'input' | 'history' | 'result';
+type AppView = 'input' | 'history' | 'result' | 'dashboard';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<BrevitaResponse | null>(null);
@@ -212,6 +213,15 @@ const App: React.FC = () => {
             </span>
 
             <button
+              onClick={() => setView('dashboard')}
+              className={`p-2 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 ${view === 'dashboard' ? 'text-indigo-600 dark:text-indigo-400 bg-slate-100 dark:bg-slate-800' : 'text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400'}`}
+              aria-label="View Dashboard"
+              title="Analytics Dashboard"
+            >
+              <LayoutDashboard size={20} />
+            </button>
+
+            <button
               onClick={handleViewHistory}
               className={`p-2 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 ${view === 'history' ? 'text-indigo-600 dark:text-indigo-400 bg-slate-100 dark:bg-slate-800' : 'text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400'}`}
               aria-label="View History"
@@ -272,6 +282,8 @@ const App: React.FC = () => {
             onDelete={handleHistoryDelete}
             onClearAll={handleClearHistory}
           />
+        ) : view === 'dashboard' ? (
+          <DashboardView history={history} />
         ) : view === 'result' && result ? (
           <div className="animate-fade-in">
             <div className="mb-6 flex items-center justify-between">
