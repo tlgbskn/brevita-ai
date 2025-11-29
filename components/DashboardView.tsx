@@ -134,7 +134,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         Topic Distribution
                     </h3>
                     <div className="h-64 w-full min-h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
                             <PieChart>
                                 <Pie
                                     data={categoryData}
@@ -184,7 +184,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         Briefing Activity (Last 30 Days)
                     </h3>
                     <div className="h-64 w-full min-h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
                             <AreaChart data={timelineData}>
                                 <defs>
                                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">

@@ -4,7 +4,7 @@ import { scaleLinear } from 'd3-scale';
 import { HistoryItem } from '../types';
 
 // GeoJSON for the world map
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+import geoUrl from './world-110m.json';
 
 interface GeoMapProps {
     history: HistoryItem[];
@@ -43,7 +43,7 @@ const GeoMap: React.FC<GeoMapProps> = ({ history, highlightCountry }) => {
             >
                 <Sphere stroke="#E4E5E6" strokeWidth={0.5} id="sphere" fill="transparent" />
                 <Graticule stroke="#E4E5E6" strokeWidth={0.5} />
-                <Geographies geography={GEO_URL}>
+                <Geographies geography={geoUrl}>
                     {({ geographies }) =>
                         geographies.map((geo) => {
                             const countryName = geo.properties.name;
