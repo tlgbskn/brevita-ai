@@ -1,13 +1,23 @@
 import { BrevitaResponse } from '../types';
 
+import { UI_TRANSLATIONS } from '../constants';
+
 export const generatePrintableHtml = (data: BrevitaResponse): string => {
   const { meta, summary_30s, key_points, context_notes, bias_or_uncertainty, military_mode } = data;
   const isMilitary = military_mode?.is_included;
-  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Determine language
+  const rawLang = meta.output_language?.toUpperCase() || 'EN';
+  const lang = (rawLang in UI_TRANSLATIONS ? rawLang : 'EN') as keyof typeof UI_TRANSLATIONS;
+  const t = UI_TRANSLATIONS[lang];
+
+  // Format date based on locale
+  const locale = lang === 'TR' ? 'tr-TR' : 'en-US';
+  const displayDate = new Date().toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
 
   return `
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="${lang.toLowerCase()}">
     <head>
       <meta charset="UTF-8">
       <title>${meta.title} - Brevita Intel Brief</title>
@@ -188,7 +198,7 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
 
       <div class="header">
         <div class="brand">Brevita<span>.ai</span></div>
-        <div class="meta-tag">Generated: ${date}</div>
+        <div class="meta-tag">Generated: ${displayDate}</div>
       </div>
 
       <h1>${meta.title}</h1>
@@ -203,7 +213,7 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
           ${meta.date || 'N/A'}
         </div>
         <div class="metadata-item">
-          <strong>Reading Time</strong>
+          <strong>${t.read_time}</strong>
           ${meta.estimated_reading_time_seconds} seconds
         </div>
         <div class="metadata-item">
@@ -235,24 +245,24 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
       </div>
       ` : ''}
 
-      <h2>Executive Summary</h2>
+      <h2>${t.executive_summary}</h2>
       <div class="section-content">
         ${summary_30s.split('\n').map(p => `<p>${p}</p>`).join('')}
       </div>
 
-      <h2>Key Points</h2>
+      <h2>${t.key_points}</h2>
       <div class="section-content">
         <ul>
           ${key_points.map(p => `<li>${p}</li>`).join('')}
         </ul>
       </div>
 
-      <h2>Context & Background</h2>
+      <h2>${t.context}</h2>
       <div class="section-content">
         <p>${context_notes}</p>
       </div>
 
-      <h2>Bias Assessment</h2>
+      <h2>${t.bias_check}</h2>
       <div class="section-content">
         <p><em>${bias_or_uncertainty}</em></p>
       </div>
@@ -260,27 +270,27 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
       ${isMilitary ? `
       <div class="military-box">
         <div class="military-header">
-          <span class="military-title">⚠️ Military / OSINT Analysis</span>
+          <span class="military-title">⚠️ ${t.osint_dashboard}</span>
           <span class="risk-badge">${military_mode.risk_level || 'UNKNOWN'} RISK</span>
         </div>
         
         <div class="section-content">
-          <strong>Commander's Brief:</strong>
+          <strong>${t.commanders_brief}:</strong>
           <p>${military_mode.commander_brief}</p>
         </div>
 
         <div class="section-content">
-          <strong>Strategic Objectives:</strong>
+          <strong>${t.objectives}:</strong>
           <p>${military_mode.interests_and_objectives}</p>
         </div>
 
         <div class="section-content">
-          <strong>Risks & Threats:</strong>
+          <strong>${t.risks}:</strong>
           <p>${military_mode.risks_and_threats}</p>
         </div>
 
         <div class="section-content">
-          <strong>Operational Implications:</strong>
+          <strong>${t.implications}:</strong>
           <p>${military_mode.operational_implications}</p>
         </div>
       </div>

@@ -73,7 +73,7 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
     } else if (format === 'txt') {
       content = generateShareableText();
     } else if (format === 'html') {
-      content = data.pdf_html || '<html><body><h1>Error: No HTML content generated.</h1></body></html>';
+      content = generatePrintableHtml(data);
       mimeType = 'text/html';
     }
 

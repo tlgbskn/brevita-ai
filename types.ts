@@ -49,7 +49,7 @@ export interface BrevitaResponse {
   context_notes: string;
   bias_or_uncertainty: string;
   military_mode: MilitaryModeData;
-  pdf_html: string;
+
   groundingChunks?: GroundingChunk[];
 }
 
