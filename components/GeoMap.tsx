@@ -72,6 +72,7 @@ const GeoMap: React.FC<GeoMapProps> = ({ history, highlightCountry }) => {
                                         },
                                         pressed: { outline: "none" },
                                     }}
+                                    // @ts-ignore: title is a valid SVG attribute passed to the path
                                     title={`${countryName}: ${count} briefings`}
                                 />
                             );
