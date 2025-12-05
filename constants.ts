@@ -140,6 +140,16 @@ FINAL REQUIREMENTS
 - Never add markdown outside JSON.
 - Never hallucinate unknown facts; rely on article text or URL extraction.
 - If extraction fails, leave fields blank but still produce valid JSON.
+
+----------------------------------------------------------------------
+LANGUAGE INSTRUCTIONS
+----------------------------------------------------------------------
+- You MUST check the "OUTPUT_LANGUAGE" field in the input.
+- If OUTPUT_LANGUAGE is "TR" (Turkish):
+  - The entire content of the report (summary, key points, context, bias, military brief, etc.) MUST be written in TURKISH.
+  - Do NOT return English content if TR is requested.
+- If OUTPUT_LANGUAGE is "EN" (English):
+  - The content MUST be in ENGLISH.
 `;
 
 export const UI_TRANSLATIONS = {
