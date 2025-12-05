@@ -205,11 +205,11 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
 
       <div class="metadata-grid">
         <div class="metadata-item">
-          <strong>Source</strong>
+          <strong>${t.source}</strong>
           ${meta.source || 'Unknown Source'}
         </div>
         <div class="metadata-item">
-          <strong>Date</strong>
+          <strong>${t.date}</strong>
           ${meta.date || 'N/A'}
         </div>
         <div class="metadata-item">
@@ -217,27 +217,27 @@ export const generatePrintableHtml = (data: BrevitaResponse): string => {
           ${meta.estimated_reading_time_seconds} seconds
         </div>
         <div class="metadata-item">
-          <strong>Category</strong>
+          <strong>${t.category}</strong>
           ${meta.category || 'General'}
         </div>
         ${meta.region ? `
         <div class="metadata-item">
-          <strong>Region</strong>
+          <strong>${t.region}</strong>
           ${meta.region}
         </div>` : ''}
         ${meta.country ? `
         <div class="metadata-item">
-          <strong>Country</strong>
+          <strong>${t.country}</strong>
           ${meta.country}
         </div>` : ''}
       </div>
       
       ${(meta.region || meta.country) ? `
-      <h2>Geographic Context</h2>
+      <h2>${t.geographic_context}</h2>
       <div class="section-content">
         <p>
-          <strong>Region:</strong> ${meta.region || 'N/A'} <br/>
-          <strong>Country:</strong> ${meta.country || 'N/A'}
+          <strong>${t.region}:</strong> ${meta.region || 'N/A'} <br/>
+          <strong>${t.country}:</strong> ${meta.country || 'N/A'}
         </p>
         <div style="background: #f1f5f9; padding: 1rem; border-radius: 4px; border: 1px dashed #cbd5e1; text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">
            [Map Visualization Placeholder - See Digital Dashboard for Interactive Map]
