@@ -122,6 +122,7 @@ ${input.article}
 
   try {
     let text = '';
+    let response: any = null;
 
     // CHECK FOR PROXY URL (SECURITY IMPROVEMENT #2)
     const proxyUrl = import.meta.env.VITE_SUPABASE_FUNCTION_URL;
@@ -154,7 +155,7 @@ ${input.article}
       // Direct Client-Side Call (Fallback)
       // console.warn("Using unsafe client-side API key. Configure VITE_SUPABASE_FUNCTION_URL to secure.");
 
-      const response = await ai.models.generateContent({
+      response = await ai.models.generateContent({
         model: 'gemini-2.0-flash',
         contents: [
           {
@@ -179,9 +180,9 @@ ${input.article}
     const validatedResponse = validateBrevitaResponse(parsedData);
 
     // 3. Extract grounding metadata (search sources) if available and merge into response
-    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-    if (groundingChunks) {
-      validatedResponse.groundingChunks = groundingChunks;
+    // 3. Extract grounding metadata (search sources) if available and merge into response
+    if (response?.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+      validatedResponse.groundingChunks = response.candidates[0].groundingMetadata.groundingChunks;
     }
 
     return validatedResponse;
