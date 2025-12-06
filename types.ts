@@ -80,4 +80,5 @@ export interface HistoryItem {
   id: string;
   timestamp: number;
   data: BrevitaResponse;
+  pinned?: boolean;
 }

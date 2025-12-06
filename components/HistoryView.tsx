@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { HistoryItem, AnalysisMode, OutputLanguage } from '../types';
-import { Trash2, Calendar, Clock, ChevronRight, History, ShieldAlert, Search, Filter, Globe, Map } from 'lucide-react';
+import { Trash2, Calendar, Clock, ChevronRight, History, ShieldAlert, Search, Filter, Globe, Map, Pin } from 'lucide-react';
 
 interface HistoryViewProps {
   history: HistoryItem[];
   onSelect: (item: HistoryItem) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onPin: (id: string, currentPinned: boolean, e: React.MouseEvent) => void;
   onClearAll: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, onClearAll }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, onPin, onClearAll }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | AnalysisMode>('ALL');
   const [filterLang, setFilterLang] = useState<'ALL' | OutputLanguage>('ALL');
@@ -50,6 +51,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
     })();
 
     return matchesSearch && matchesMode && matchesLang && matchesCategory && matchesDate;
+  }).sort((a, b) => {
+    // Sort pinned items first, then by date descending
+    if (a.pinned === b.pinned) {
+      return b.timestamp - a.timestamp;
+    }
+    return a.pinned ? -1 : 1;
   });
 
   if (history.length === 0) {
@@ -161,19 +168,27 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
             const isMilitary = item.data.military_mode?.is_included;
             const date = new Date(item.timestamp).toLocaleDateString();
             const time = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isPinned = item.pinned;
 
             return (
               <div
                 key={item.id}
                 onClick={() => onSelect(item)}
-                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-xl p-5 cursor-pointer transition-all shadow-sm hover:shadow-md relative overflow-hidden"
+                className={`group bg-white dark:bg-slate-900 border ${isPinned ? 'border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-800'} hover:border-indigo-500 dark:hover:border-indigo-500 rounded-xl p-5 cursor-pointer transition-all shadow-sm hover:shadow-md relative overflow-hidden`}
               >
                 {/* Hover indicator */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 dark:bg-indigo-500 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                <div className={`absolute left-0 top-0 bottom-0 w-1 ${isPinned ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-indigo-600 dark:bg-indigo-500 transform -translate-x-full group-hover:translate-x-0'} transition-transform duration-300`}></div>
 
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
+                      {/* Pin Badge */}
+                      {isPinned && (
+                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-800">
+                          <Pin size={10} className="fill-current" /> PINNED
+                        </span>
+                      )}
+
                       <span className="text-xs font-mono text-slate-400 dark:text-slate-500 flex items-center gap-1">
                         {date} • {time}
                       </span>
@@ -227,6 +242,14 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
                   </div>
 
                   <div className="flex flex-col items-end gap-2 pl-2">
+                    <button
+                      onClick={(e) => onPin(item.id, !!item.pinned, e)}
+                      className={`p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${isPinned ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 opacity-100' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                      title={isPinned ? "Unpin Briefing" : "Pin Briefing"}
+                    >
+                      <Pin size={18} className={isPinned ? "fill-current" : ""} />
+                    </button>
+
                     <button
                       onClick={(e) => onDelete(item.id, e)}
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"

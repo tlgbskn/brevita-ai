@@ -1,11 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT } from "../constants";
 import { UserInput, BrevitaResponse } from "../types";
+import { validateBrevitaResponse } from "./validation";
 
 const ai = new GoogleGenAI({
   apiKey: import.meta.env.VITE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY,
 });
-
 
 /**
  * Robust JSON parser for LLM outputs.
@@ -138,23 +138,26 @@ ${input.article}
       throw new Error("No response generated from Gemini.");
     }
 
-    const parsedResponse = parseRobustJSON(text) as BrevitaResponse;
+    // 1. Parse JSON robustly
+    const parsedData = parseRobustJSON(text);
 
-    // Validate critical fields exist to prevent UI crashes
-    if (!parsedResponse.meta) {
-      throw new Error("Incomplete JSON structure received.");
-    }
+    // 2. Validate Schema using Zod
+    const validatedResponse = validateBrevitaResponse(parsedData);
 
-    // Extract grounding metadata (search sources) if available and merge into response
+    // 3. Extract grounding metadata (search sources) if available and merge into response
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (groundingChunks) {
-      parsedResponse.groundingChunks = groundingChunks;
+      validatedResponse.groundingChunks = groundingChunks;
     }
 
-    return parsedResponse;
+    return validatedResponse;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating analysis:", error);
+    // Enhance error message if it's a validation error
+    if (error.message.includes("Response Validation Failed")) {
+      throw new Error(`AI generated invalid structure: ${error.message}`);
+    }
     throw error;
   }
 };

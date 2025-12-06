@@ -37,35 +37,48 @@ export const historyService = {
   save: async (data: BrevitaResponse): Promise<HistoryItem> => {
     const { data: { user } } = await supabase.auth.getUser();
 
+    // 1. Try Supabase if logged in
     if (user) {
-      const { data: inserted, error } = await supabase
-        .from('briefings')
-        .insert({
-          user_id: user.id,
-          data: data
-        })
-        .select()
-        .single();
+      try {
+        const { data: inserted, error } = await supabase
+          .from('briefings')
+          .insert({
+            user_id: user.id,
+            data: data
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.error("Supabase save error:", error);
-        throw error;
+        if (error) throw error;
+
+        // Also save text locally for offline cache if desired, but for now just return cloud result
+        return {
+          id: inserted.id,
+          timestamp: new Date(inserted.created_at).getTime(),
+          data: inserted.data,
+          pinned: inserted.is_pinned || false // Assuming potential column, otherwise false
+        };
+      } catch (err) {
+        console.error("Supabase save failed, falling back to local:", err);
+        // Fallback to local
       }
-
-      return {
-        id: inserted.id,
-        timestamp: new Date(inserted.created_at).getTime(),
-        data: inserted.data
-      };
     }
 
+    // 2. Local Fallback (or default if no user)
     const newItem: HistoryItem = {
       id: Date.now().toString(),
       timestamp: Date.now(),
       data,
+      pinned: false
     };
 
-    await db.addBriefing(newItem);
+    try {
+      await db.addBriefing(newItem);
+    } catch (localErr) {
+      console.error("Local save failed:", localErr);
+      throw new Error("Failed to save briefing to both Cloud and Local storage.");
+    }
+
     return newItem;
   },
 
@@ -73,23 +86,27 @@ export const historyService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const { data, error } = await supabase
-        .from('briefings')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('briefings')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Supabase fetch error:", error);
-        return [];
+        if (error) throw error;
+
+        return data.map((row: any) => ({
+          id: row.id,
+          timestamp: new Date(row.created_at).getTime(),
+          data: row.data,
+          pinned: row.is_pinned || false
+        }));
+      } catch (err) {
+        console.error("Supabase fetch failed, falling back to local cache:", err);
+        // Consider alerting the user here if needed
       }
-
-      return data.map((row: any) => ({
-        id: row.id,
-        timestamp: new Date(row.created_at).getTime(),
-        data: row.data
-      }));
     }
 
+    // Fallback to local
     return await db.getAllBriefings();
   },
 
@@ -97,13 +114,18 @@ export const historyService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const { error } = await supabase
-        .from('briefings')
-        .delete()
-        .eq('id', id);
+      try {
+        const { error } = await supabase
+          .from('briefings')
+          .delete()
+          .eq('id', id);
 
-      if (error) throw error;
-      return;
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.error("Supabase delete failed:", err);
+        // Fallback to try deleting locally just in case
+      }
     }
 
     await db.deleteBriefing(id);
@@ -113,16 +135,40 @@ export const historyService = {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      // Only delete user's own rows due to RLS
-      const { error } = await supabase
-        .from('briefings')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Hack to delete all matching RLS
+      try {
+        // Only delete user's own rows due to RLS
+        const { error } = await supabase
+          .from('briefings')
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000');
 
-      if (error) throw error;
-      return;
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.error("Supabase clear failed:", err);
+      }
     }
 
     await db.clearAll();
+  },
+
+  updatePin: async (id: string, pinned: boolean): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('briefings')
+          .update({ is_pinned: pinned })
+          .eq('id', id);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error("Supabase pin update failed:", err);
+      }
+    }
+
+    // Always update local for offline capability
+    await db.updateBriefing(id, { pinned });
   }
 };

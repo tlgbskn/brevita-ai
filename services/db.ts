@@ -91,6 +91,31 @@ class BrevitaDB {
       request.onerror = () => reject(request.error);
     });
   }
+
+  async updateBriefing(id: string, updates: Partial<HistoryItem>): Promise<void> {
+    const db = await this.connect();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const getRequest = store.get(id);
+
+      getRequest.onsuccess = () => {
+        const item = getRequest.result as HistoryItem;
+        if (!item) {
+          reject(new Error("Item not found"));
+          return;
+        }
+
+        const updatedItem = { ...item, ...updates };
+        const putRequest = store.put(updatedItem);
+
+        putRequest.onsuccess = () => resolve();
+        putRequest.onerror = () => reject(putRequest.error);
+      };
+
+      getRequest.onerror = () => reject(getRequest.error);
+    });
+  }
 }
 
 export const db = new BrevitaDB();

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import {
   Bot, History, Sun, Moon, LogOut, LogIn, Github,
-  ChevronLeft, FileText, ShieldCheck, Database, CheckCircle, LayoutDashboard
+  ChevronLeft, FileText, ShieldCheck, Database, CheckCircle, LayoutDashboard, ShieldAlert
 } from 'lucide-react';
 import { generateAnalysis } from './services/geminiService';
 import { historyService } from './services/historyService';
@@ -21,6 +21,27 @@ import {
 type AppView = 'input' | 'history' | 'result' | 'dashboard';
 
 const App: React.FC = () => {
+  // Startup Health Check
+  const apiKey = import.meta.env.VITE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-8 border border-red-200 dark:border-red-900 text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Configuration Error</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            The Gemini API key is missing. Please configure <code>VITE_API_KEY</code> in your <code>.env</code> file to continue.
+          </p>
+          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg text-sm text-slate-500 font-mono break-all">
+            VITE_API_KEY=...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [result, setResult] = useState<BrevitaResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +161,26 @@ const App: React.FC = () => {
         console.error("Failed to clear history:", err);
         toast.error("Failed to clear history");
       }
+    }
+  };
+
+
+
+  const handleHistoryPin = async (id: string, currentPinned: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const newPinnedState = !currentPinned;
+      await historyService.updatePin(id, newPinnedState);
+
+      // Optimistic update
+      setHistory(prev => prev.map(item =>
+        item.id === id ? { ...item, pinned: newPinnedState } : item
+      ));
+
+      toast.success(newPinnedState ? "Briefing pinned" : "Briefing unpinned");
+    } catch (err) {
+      console.error("Failed to update pin:", err);
+      toast.error("Failed to update pin status");
     }
   };
 
@@ -280,6 +321,7 @@ const App: React.FC = () => {
             history={history}
             onSelect={handleHistorySelect}
             onDelete={handleHistoryDelete}
+            onPin={handleHistoryPin}
             onClearAll={handleClearHistory}
           />
         ) : view === 'dashboard' ? (
@@ -345,7 +387,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-auto transition-colors duration-300">
+      < footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 mt-auto transition-colors duration-300" >
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between text-slate-400 dark:text-slate-500 text-sm gap-4">
           <p>© 2024 Brevita AI. Powered by Google Gemini.</p>
 
@@ -356,11 +398,11 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-      </footer>
+      </footer >
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <Toaster position="top-center" richColors />
-    </div>
+    </div >
   );
 };
 
