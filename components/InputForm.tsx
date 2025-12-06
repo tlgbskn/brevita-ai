@@ -37,51 +37,7 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
 
 
 
-  const [isFetching, setIsFetching] = useState(false);
 
-  const handleFetchUrl = async () => {
-    if (!formData.url) return;
-    setIsFetching(true);
-
-    try {
-      const proxyUrl = import.meta.env.VITE_SUPABASE_FUNCTION_URL;
-      const functionUrl = proxyUrl ? `${proxyUrl}/fetch-url` : null;
-
-      if (!functionUrl) {
-        alert("Please configure VITE_SUPABASE_FUNCTION_URL to use the scraper.");
-        setIsFetching(false);
-        return;
-      }
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ url: formData.url })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      setFormData(prev => ({
-        ...prev,
-        article: data.article || prev.article,
-        title: data.title || prev.title,
-        source: data.source || prev.source
-      }));
-
-    } catch (error) {
-      console.error("Scrape error:", error);
-      alert("Failed to fetch article. Please verify the URL or paste text manually.");
-    } finally {
-      setIsFetching(false);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,27 +109,16 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
 
         {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative flex gap-2">
-            <div className="relative flex-1">
-              <LinkIcon className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={16} />
-              <input
-                type="text"
-                placeholder="Source URL (Required if text empty)"
-                className={`w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${!formData.article && !formData.url ? 'border-red-300 dark:border-red-800' : 'border-slate-200 dark:border-slate-700'
-                  }`}
-                value={formData.url}
-                onChange={(e) => handleChange('url', e.target.value)}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleFetchUrl}
-              disabled={isFetching || !formData.url}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
-            >
-              {isFetching ? <Loader2 size={16} className="animate-spin" /> : <Globe size={16} />}
-              Fetch
-            </button>
+          <div className="relative">
+            <LinkIcon className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={16} />
+            <input
+              type="text"
+              placeholder="Source URL (Required if text empty)"
+              className={`w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${!formData.article && !formData.url ? 'border-red-300 dark:border-red-800' : 'border-slate-200 dark:border-slate-700'
+                }`}
+              value={formData.url}
+              onChange={(e) => handleChange('url', e.target.value)}
+            />
           </div>
           <div className="relative">
             <Type className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={16} />
