@@ -121,22 +121,56 @@ ${input.article}
   }
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: userMessage }]
-        }
-      ],
-      config: config
-    });
+    let text = '';
 
+    // CHECK FOR PROXY URL (SECURITY IMPROVEMENT #2)
+    const proxyUrl = import.meta.env.VITE_SUPABASE_FUNCTION_URL;
 
-    const text = response.text;
+    if (proxyUrl) {
+      // Use Edge Function Proxy
+      console.log("Routing analysis through secure proxy...");
+
+      const proxyResponse = await fetch(`${proxyUrl}/analyze-briefing`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user', parts: [{ text: userMessage }] }],
+          config: { systemInstruction: SYSTEM_PROMPT }
+        })
+      });
+
+      if (!proxyResponse.ok) {
+        const errData = await proxyResponse.json().catch(() => ({}));
+        throw new Error(errData.error || `Proxy Error: ${proxyResponse.status}`);
+      }
+
+      const data = await proxyResponse.json();
+      text = data.text;
+
+    } else {
+      // Direct Client-Side Call (Fallback)
+      // console.warn("Using unsafe client-side API key. Configure VITE_SUPABASE_FUNCTION_URL to secure.");
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userMessage }]
+          }
+        ],
+        config: config
+      });
+      text = response.text || '';
+    }
+
     if (!text) {
       throw new Error("No response generated from Gemini.");
     }
+
 
     // 1. Parse JSON robustly
     const parsedData = parseRobustJSON(text);

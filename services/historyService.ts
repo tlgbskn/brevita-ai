@@ -1,6 +1,6 @@
 import { BrevitaResponse, HistoryItem } from '../types';
 import { db } from './db';
-import { supabase } from './supabase';
+import { supabase, isConfigured } from './supabase';
 
 const LEGACY_STORAGE_KEY = 'brevita_history';
 
@@ -37,8 +37,8 @@ export const historyService = {
   save: async (data: BrevitaResponse): Promise<HistoryItem> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Try Supabase if logged in
-    if (user) {
+    // 1. Try Supabase if logged in AND configured
+    if (user && isConfigured) {
       try {
         const { data: inserted, error } = await supabase
           .from('briefings')
@@ -85,7 +85,7 @@ export const historyService = {
   getAll: async (): Promise<HistoryItem[]> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && isConfigured) {
       try {
         const { data, error } = await supabase
           .from('briefings')
@@ -113,7 +113,7 @@ export const historyService = {
   delete: async (id: string): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && isConfigured) {
       try {
         const { error } = await supabase
           .from('briefings')
@@ -134,7 +134,7 @@ export const historyService = {
   clear: async (): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && isConfigured) {
       try {
         // Only delete user's own rows due to RLS
         const { error } = await supabase
@@ -155,7 +155,7 @@ export const historyService = {
   updatePin: async (id: string, pinned: boolean): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && isConfigured) {
       try {
         const { error } = await supabase
           .from('briefings')
@@ -175,7 +175,7 @@ export const historyService = {
   updateTriageStatus: async (id: string, status: 'new' | 'review' | 'closed'): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (user && isConfigured) {
       try {
         const { error } = await supabase
           .from('briefings')

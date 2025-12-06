@@ -82,6 +82,8 @@ const App: React.FC = () => {
 
   // Auth State Listener
   useEffect(() => {
+    if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('YOUR_')) return;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
