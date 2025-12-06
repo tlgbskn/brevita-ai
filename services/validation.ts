@@ -29,7 +29,18 @@ const MetaDataSchema = z.object({
     category: z.string().optional().default("General"),
     tags: z.array(z.string()).default([]),
     region: z.string().optional(),
-    country: z.string().optional()
+    country: z.string().optional(),
+    reliability_score: z.number().min(0).max(100).optional(),
+    credibility_analysis: z.string().optional(),
+    entities: z.array(z.object({
+        name: z.string(),
+        type: z.enum(['person', 'org', 'location', 'event', 'other']),
+        sentiment: z.enum(['positive', 'negative', 'neutral']).optional(),
+        coordinates: z.object({
+            lat: z.number(),
+            lng: z.number()
+        }).optional()
+    })).optional().default([])
 });
 
 // Define the Main Response Schema
@@ -39,7 +50,13 @@ const BrevitaResponseSchema = z.object({
     key_points: z.array(z.string()).default([]),
     context_notes: z.string().default(""),
     bias_or_uncertainty: z.string().default(""),
-    military_mode: MilitaryModeSchema.default({ is_included: false }),
+    military_mode: MilitaryModeSchema.default({
+        is_included: false,
+        actors: [],
+        theater_tags: [],
+        domain_tags: [],
+        watchpoints_for_commanders: []
+    }),
     // Grounding chunks are optional and usually added later, but allowing them here is fine
     groundingChunks: z.array(z.any()).optional()
 });

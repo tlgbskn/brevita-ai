@@ -2,6 +2,10 @@ export interface Entity {
   name: string;
   type: 'person' | 'org' | 'location' | 'event' | 'other';
   sentiment?: 'positive' | 'negative' | 'neutral';
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface MetaData {
@@ -16,6 +20,8 @@ export interface MetaData {
   tags?: string[];
   region?: string;
   country?: string;
+  reliability_score?: number; // 0-100
+  credibility_analysis?: string;
   entities?: Entity[];
 }
 

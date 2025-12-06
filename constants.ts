@@ -45,7 +45,17 @@ You MUST return strictly valid JSON:
     "category": "",
     "tags": [],
     "region": "",
-    "country": ""
+    "country": "",
+    "reliability_score": 0,
+    "credibility_analysis": "",
+    "entities": [
+      {
+        "name": "",
+        "type": "person",
+        "sentiment": "neutral",
+        "coordinates": { "lat": 0, "lng": 0 }
+      }
+    ]
   },
   "summary_30s": "",
   "key_points": [],
@@ -84,10 +94,18 @@ CATEGORIZATION RULES
 - "tags": You MUST generate 3-5 relevant tags (short, lowercase keywords) that describe the specific topic, country, or entity.
 - "region": The primary geopolitical region mentioned (e.g., "Middle East", "Europe", "Asia-Pacific", "North America").
 - "country": The primary country of focus (e.g., "Turkey", "USA", "Ukraine"). If multiple, choose the most central one.
-- "entities": Array of objects identifying key entities. Each object must have:
+- "reliability_score": Integer 0-100 representing source and content credibility.
+    - 90-100: Top tier official sources (Reuters, AP) or verified government docs.
+    - 70-89: Reputable mainstream media or established think tanks.
+    - 50-69: Opinionated but factual, or unverified emerging reports.
+    - <50: Tabloids, rumors, or highly biased propaganda.
+- "credibility_analysis": One sentence explaining the score (e.g., "High credibility due to corroboration by multiple major agencies.").
+- "entities": Array of objects identifying key entities.
     - "name": Name of the entity.
     - "type": One of ["person", "org", "location", "event", "other"].
     - "sentiment": One of ["positive", "negative", "neutral"] (contextual sentiment).
+    - "coordinates": (Optional) { "lat": number, "lng": number } for "location" type entities ONLY. approximate is fine.
+
 
 ----------------------------------------------------------------------
 MILITARY MODE RULES

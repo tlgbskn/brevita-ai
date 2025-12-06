@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { BrevitaResponse } from '../types';
-import { ShieldAlert, Info, List, Clock, Target, Eye, Zap, Activity, Share2, Copy, Check, Twitter, Download, FileText, Map as MapIcon, Globe, Printer, FileCode, ExternalLink } from 'lucide-react';
+import { ShieldAlert, Info, List, Clock, Target, Eye, Zap, Activity, Share2, Copy, Check, Twitter, Download, FileText, Map as MapIcon, Globe, Printer, FileCode, ExternalLink, ShieldCheck, User, Building } from 'lucide-react';
 import { UI_TRANSLATIONS } from '../constants';
 import { generatePrintableHtml } from '../services/printService';
 import GeoMap from './GeoMap';
@@ -191,7 +191,25 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
                   <ShieldAlert size={14} /> {t.military_mode}
                 </span>
               )}
+
+              {/* Reliability Score Badge */}
+              {data.meta.reliability_score !== undefined && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded border font-bold ${data.meta.reliability_score >= 80 ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800' :
+                  data.meta.reliability_score >= 50 ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800' :
+                    'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
+                  }`} title={data.meta.credibility_analysis || "Reliability Score"}>
+                  <ShieldCheck size={14} />
+                  <span>Trust: {data.meta.reliability_score}%</span>
+                </div>
+              )}
             </div>
+
+            {/* Credibility Analysis (if present) */}
+            {data.meta.credibility_analysis && (
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 italic border-l-2 border-slate-300 dark:border-slate-700 pl-2">
+                "Analysis: {data.meta.credibility_analysis}"
+              </p>
+            )}
           </div>
 
           {/* Share Toolbar */}
@@ -285,7 +303,31 @@ const AnalysisView = ({ data }: AnalysisViewProps) => {
             </div>
           </div>
 
-          {/* Map Visualization (If Country is detected) */}
+          {/* Entities Section (OSINT) */}
+          {data.meta.entities && data.meta.entities.length > 0 && (
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mb-8">
+              <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Target size={16} /> Identified Entities
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {data.meta.entities.map((entity, i) => (
+                  <span key={i} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${entity.type === 'person' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' :
+                    entity.type === 'org' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' :
+                      entity.type === 'location' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800' :
+                        'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                    }`}>
+                    {entity.type === 'person' && <User size={12} />}
+                    {entity.type === 'org' && <Building size={12} />}
+                    {entity.type === 'location' && <MapIcon size={12} />}
+                    {entity.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Map Visualization (If Country is detected or Entities have coords) */}
+          {/* Note: In future, we can map specifics. For now, country level. */}
           {data.meta.country && (
             <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
