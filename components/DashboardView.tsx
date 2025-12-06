@@ -145,8 +145,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         <TrendingUp size={18} className="text-slate-400" />
                         Topic Distribution
                     </h3>
-                    <div className="h-64 w-full min-h-[250px]">
-                        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+                    <div style={{ width: '100%', height: '250px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={categoryData}
@@ -195,8 +195,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                         <Activity size={18} className="text-slate-400" />
                         Activity (Last 7 Days)
                     </h3>
-                    <div className="h-64 w-full min-h-[250px]">
-                        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
+                    <div style={{ width: '100%', height: '250px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={last7DaysData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
                                 <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} />
