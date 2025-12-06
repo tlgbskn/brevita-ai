@@ -1,35 +1,36 @@
-# OSINT-Focused Improvement Ideas
+# OSINT-Focused Improvement Ideas (Follow-up)
 
-Additional enhancements to tailor the application for open-source intelligence (OSINT) workflows:
+A second-pass review after recent upgrades surfaced the next set of OSINT-specific enhancements. These are grouped by capability and designed to plug into the current React/Supabase stack.
 
-1. **Source Federation & Trust Scoring**
-   - Add connectors for RSS/Atom feeds, social platforms (e.g., Mastodon/Bluesky via APIs), Pastebin-like sites, and code for ingesting PDFs/HTML via web scraping.
-   - Track per-source reliability scores and last-seen timestamps; surface a "trust meter" beside each result to help analysts weigh evidence.
+## 1) Collections, acquisition, and preservation
+- Add configurable source profiles (RSS, Atom, JSONL APIs, CSV drops) with per-source crawl cadence, user agent, and robots.txt awareness to avoid accidental throttling.
+- Normalize downloads into a single ingest schema (URL, MIME, raw text, hash, fetched_at, source tag) and persist raw artifacts to Supabase Storage with signed URLs for re-verification.
+- Capture screenshots and PDF/HTML snapshots on ingest to preserve visual context and mitigate link rot.
+- Introduce a “chain-of-custody” view that exposes the first-seen URL, downstream mirrors, hashes, and timestamps so analysts can attest provenance.
 
-2. **Entity Extraction & Link Analysis**
-   - Integrate NER for people, organizations, domains, IPs, crypto wallets, and hashes; auto-tag ingested documents.
-   - Provide a relationship graph view (e.g., force-directed visualization) to explore co-occurrences and shared attributes across documents.
+## 2) Entity, link, and pattern intelligence
+- Add modular NER pipelines for people/orgs/locations/IOCs with confidence scores, plus enrichment hooks (WHOIS, Shodan, VirusTotal, CTI feeds) cached per indicator.
+- Build a lightweight graph overlay (nodes = entities, edges = co-occurrence or shared attributes) with filters by time window, source trust, and tag.
+- Ship reusable regex + ML detectors for callsigns, tail numbers, vessel identifiers, crypto wallets, and hash formats; surface them as inline highlights in the briefing UI.
 
-3. **Geotemporal Context**
-   - Normalize time zones and add timeline views with clustering by day/hour to spot bursts of activity.
-   - Extract and map geo-coordinates/place names; render a heatmap or pin map with filters for source type and confidence.
+## 3) Geotemporal and alerting workflows
+- Standardize timestamps to UTC, add a timeline widget with burst detection, and allow histogram bucketing (hour/day/week) in `DashboardView`.
+- Add geo-resolvers for place names and coordinates, render a map layer with density heatmaps, and allow polygon filters for AOI (area of interest) queries.
+- Support saved searches with delivery channels (email/webhook) and dedupe rules so repeated hits from the same source are throttled.
 
-4. **Deduplication & Evidence Provenance**
-   - Implement fuzzy matching and shingling to collapse near-duplicate documents while preserving original URLs.
-   - Show provenance chains (first-seen source, subsequent mirrors) and hash checks to quickly validate authenticity.
+## 4) Quality, scoring, and analyst collaboration
+- Implement per-source trust scoring combined with content quality checks (readability, duplication, missing metadata) and surface a composite confidence badge in `AnalysisView`.
+- Add triage states (New/In Review/Closed), ownership, and threaded comments; expose quick actions in `HistoryView` to re-run analysis after new enrichments.
+- Provide redaction tooling for PII removal before export and track audit events (who viewed/exported) in Supabase for compliance.
 
-5. **Workflow Automations**
-   - Add saved searches with alerts (webhook/email) when new matches arrive, plus one-click export to CSV/JSON for sharing.
-   - Provide redaction tools to strip PII before sharing and an audit log to track who accessed or modified entries.
+## 5) Resilience, privacy, and safety
+- Introduce rate-limit handling and jittered backoff for third-party enrichers, with a circuit breaker that automatically falls back to cached results.
+- Add opt-in client-side encryption for sensitive artifacts prior to storage, with key material stored in the user’s session storage instead of Supabase.
+- Expand the startup health check to cover Supabase availability and storage buckets so the UI can route users to offline mode before failures occur.
 
-6. **Scoring & Triage**
-   - Introduce analyst-defined scoring rules (keyword hits, geo proximity, source trust) to auto-rank incoming items.
-   - Include triage queues (New, In Review, Closed) with ownership and comments to streamline team collaboration.
+## 6) Productization and ergonomics
+- Offer “quickstart” sample OSINT queries (e.g., maritime incident, disinformation cluster, vulnerability CVE) inside `InputForm` to reduce blank-screen time.
+- Allow export of full evidence bundles (raw docs, screenshots, hashes, enriched entities) as a downloadable ZIP for case handoffs.
+- Provide keyboard shortcuts for pinning, filtering, and exporting in `HistoryView`, and add global search across titles, tags, and entity fields.
 
-7. **Security & Compliance**
-   - Support signed webhooks and API key rotation; add integrity checks on stored artifacts.
-   - Include configurable retention policies and a "legal hold" flag to prevent deletions during investigations.
-
-8. **Performance & Resilience**
-   - Cache expensive lookups (WHOIS, VirusTotal, Shodan) and back off gracefully on rate limits.
-   - Provide offline mode with local persistence and background sync to keep field work uninterrupted.
+These items are scoped to the existing codebase and should be achievable with incremental UI hooks in `DashboardView`, `HistoryView`, and `AnalysisView`, plus ingest/enrichment services alongside the current Supabase backend.

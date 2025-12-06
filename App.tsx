@@ -184,6 +184,22 @@ const App: React.FC = () => {
     }
   };
 
+  const handleHistoryTriage = async (id: string, status: 'new' | 'review' | 'closed') => {
+    try {
+      await historyService.updateTriageStatus(id, status);
+
+      // Optimistic update
+      setHistory(prev => prev.map(item =>
+        item.id === id ? { ...item, triage_status: status } : item
+      ));
+
+      toast.success(`Marked as ${status.toUpperCase()}`);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleAnalysis = async (input: UserInput) => {
     // Capture selection for loading screen
     setProcessingMeta({
@@ -322,6 +338,7 @@ const App: React.FC = () => {
             onSelect={handleHistorySelect}
             onDelete={handleHistoryDelete}
             onPin={handleHistoryPin}
+            onTriage={handleHistoryTriage}
             onClearAll={handleClearHistory}
           />
         ) : view === 'dashboard' ? (

@@ -170,5 +170,25 @@ export const historyService = {
 
     // Always update local for offline capability
     await db.updateBriefing(id, { pinned });
+  },
+
+  updateTriageStatus: async (id: string, status: 'new' | 'review' | 'closed'): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from('briefings')
+          .update({ triage_status: status })
+          .eq('id', id);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error("Supabase triage update failed:", err);
+      }
+    }
+
+    // Always update local for offline capability
+    await db.updateBriefing(id, { triage_status: status });
   }
 };

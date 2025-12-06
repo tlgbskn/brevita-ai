@@ -7,10 +7,11 @@ interface HistoryViewProps {
   onSelect: (item: HistoryItem) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
   onPin: (id: string, currentPinned: boolean, e: React.MouseEvent) => void;
+  onTriage: (id: string, status: 'new' | 'review' | 'closed') => void;
   onClearAll: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, onPin, onClearAll }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, onPin, onTriage, onClearAll }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'ALL' | AnalysisMode>('ALL');
   const [filterLang, setFilterLang] = useState<'ALL' | OutputLanguage>('ALL');
@@ -250,15 +251,37 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
                       <Pin size={18} className={isPinned ? "fill-current" : ""} />
                     </button>
 
-                    <button
-                      onClick={(e) => onDelete(item.id, e)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                      title="Delete Briefing"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                    <div className="mt-auto text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
-                      <ChevronRight size={20} />
+                    {/* Triage Status Toggle */}
+                    <div className="relative group/triage">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); }}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase border transition-colors ${item.triage_status === 'review' ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800' :
+                            item.triage_status === 'closed' ? 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700' :
+                              'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800'
+                          }`}
+                      >
+                        {item.triage_status || 'NEW'}
+                      </button>
+                      <div className="absolute right-0 top-full mt-1 w-24 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-lg overflow-hidden z-20 hidden group-hover/triage:block">
+                        <button onClick={(e) => { e.stopPropagation(); onTriage(item.id, 'new'); }} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-indigo-600 font-medium">NEW</button>
+                        <button onClick={(e) => { e.stopPropagation(); onTriage(item.id, 'review'); }} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-orange-600 font-medium">REVIEW</button>
+                        <button onClick={(e) => { e.stopPropagation(); onTriage(item.id, 'closed'); }} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 font-medium">CLOSED</button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1"></div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => onDelete(item.id, e)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        title="Delete Briefing"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                      <div className="text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight size={20} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -266,8 +289,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
             );
           })
         )}
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

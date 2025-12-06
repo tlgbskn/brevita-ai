@@ -55,22 +55,34 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
             .slice(0, 5); // Top 5
     }, [history]);
 
-    // 4. Prepare Timeline Data (Area Chart)
-    const timelineData = useMemo(() => {
+    // 4. Prepare Timeline Data (Last 7 Days)
+    const last7DaysData = useMemo(() => {
         const counts: Record<string, number> = {};
-        // Group by date (YYYY-MM-DD)
+        const today = new Date();
+        const dates = [];
+
+        // Initialize last 7 days with 0
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            counts[dateStr] = 0;
+            dates.push(dateStr);
+        }
+
+        // Fill counts
         history.forEach(item => {
             const date = new Date(item.timestamp).toISOString().split('T')[0];
-            counts[date] = (counts[date] || 0) + 1;
+            if (counts[date] !== undefined) {
+                counts[date]++;
+            }
         });
 
-        // Sort by date and format
-        return Object.entries(counts)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([date, count]) => ({
-                date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                count
-            }));
+        // Format for chart
+        return dates.map(date => ({
+            date: new Date(date).toLocaleDateString(undefined, { weekday: 'short' }), // Mon, Tue...
+            count: counts[date]
+        }));
     }, [history]);
 
     if (history.length === 0) {
@@ -181,25 +193,20 @@ const DashboardView: React.FC<DashboardViewProps> = ({ history }) => {
                 <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                         <Activity size={18} className="text-slate-400" />
-                        Briefing Activity (Last 30 Days)
+                        Activity (Last 7 Days)
                     </h3>
                     <div className="h-64 w-full min-h-[250px]">
                         <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
-                            <AreaChart data={timelineData}>
-                                <defs>
-                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
+                            <BarChart data={last7DaysData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
                                 <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
                                 <Tooltip
+                                    cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                                     contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                                 />
-                                <Area type="monotone" dataKey="count" stroke="#6366f1" fillOpacity={1} fill="url(#colorCount)" />
-                            </AreaChart>
+                                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

@@ -87,4 +87,5 @@ export interface HistoryItem {
   timestamp: number;
   data: BrevitaResponse;
   pinned?: boolean;
+  triage_status?: 'new' | 'review' | 'closed';
 }
