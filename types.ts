@@ -5,7 +5,7 @@ export interface Entity {
   coordinates?: {
     lat: number;
     lng: number;
-  };
+  } | null;
 }
 
 export interface MetaData {

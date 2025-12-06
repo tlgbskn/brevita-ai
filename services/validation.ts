@@ -22,7 +22,7 @@ const MetaDataSchema = z.object({
     title: z.string().default("Untitled Briefing"),
     source: z.string().optional(),
     date: z.string().optional(),
-    url: z.string().optional(),
+    url: z.string().nullable().optional().or(z.literal("")),
     mode: z.string().optional(),
     output_language: z.string().optional(),
     estimated_reading_time_seconds: z.number().default(0),
@@ -34,12 +34,12 @@ const MetaDataSchema = z.object({
     credibility_analysis: z.string().optional(),
     entities: z.array(z.object({
         name: z.string(),
-        type: z.enum(['person', 'org', 'location', 'event', 'other']),
-        sentiment: z.enum(['positive', 'negative', 'neutral']).optional(),
+        type: z.enum(['person', 'org', 'location', 'event', 'other']).or(z.string()),
+        sentiment: z.string().optional(),
         coordinates: z.object({
-            lat: z.number(),
-            lng: z.number()
-        }).optional()
+            lat: z.number().or(z.string().transform(val => parseFloat(val))),
+            lng: z.number().or(z.string().transform(val => parseFloat(val)))
+        }).nullable().optional()
     })).optional().default([])
 });
 
