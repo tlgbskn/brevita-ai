@@ -185,6 +185,15 @@ ${input.article}
       validatedResponse.groundingChunks = response.candidates[0].groundingMetadata.groundingChunks;
     }
 
+    // 4. Fallback for Reading Time (if 0 or missing)
+    if (!validatedResponse.meta.estimated_reading_time_seconds) {
+      const summaryWords = validatedResponse.summary_30s.split(/\s+/).length;
+      const keyPointsWords = validatedResponse.key_points.join(" ").split(/\s+/).length;
+      const totalWords = summaryWords + keyPointsWords;
+      // Average reading speed ~240 words/minute => 4 words/second
+      validatedResponse.meta.estimated_reading_time_seconds = Math.ceil(totalWords / 4);
+    }
+
     return validatedResponse;
 
   } catch (error: any) {
