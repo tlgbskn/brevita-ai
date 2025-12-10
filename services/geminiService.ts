@@ -73,6 +73,47 @@ function parseRobustJSON(str: string): any {
   }
 }
 
+
+/**
+ * Retries an async operation with exponential backoff.
+ * Useful for handling rate limits (429) or transient server errors (503).
+ */
+async function callWithRetry<T>(
+  fn: () => Promise<T>,
+  retries: number = 3,
+  initialDelay: number = 2000
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      attempt++;
+
+      // Check for specific error conditions to retry
+      const isRateLimit = error.message?.includes('429') || error.status === 429 || error.message?.includes('RESOURCE_EXHAUSTED');
+      const isTransient = error.message?.includes('503') || error.status === 503 || error.message?.includes('Overloaded');
+
+      if (!isRateLimit && !isTransient) {
+        throw error; // Don't retry other errors
+      }
+
+      if (attempt >= retries) {
+        // Enhance error message on final failure
+        if (isRateLimit) {
+          throw new Error(`Service is currently busy (Rate Limit Exceeded). Please try again in a minute. (Failed after ${retries} attempts)`);
+        }
+        throw error;
+      }
+
+      const delay = initialDelay * Math.pow(2, attempt - 1);
+      console.warn(`Attempt ${attempt} failed. Retrying in ${delay}ms...`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("Unexpected retry loop exit");
+}
+
 export const generateAnalysis = async (input: UserInput): Promise<BrevitaResponse> => {
   // If no article text is provided, we MUST use the googleSearch tool to find content from the URL.
   const shouldUseSearch = !input.article.trim() && input.url.trim().length > 0;
@@ -128,44 +169,51 @@ ${input.article}
     const proxyUrl = import.meta.env.VITE_SUPABASE_FUNCTION_URL;
 
     if (proxyUrl) {
-      // Use Edge Function Proxy
+      // Use Edge Function Proxy with Retry
       console.log("Routing analysis through secure proxy...");
 
-      const proxyResponse = await fetch(`${proxyUrl}/analyze-briefing`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          messages: [{ role: 'user', parts: [{ text: userMessage }] }],
-          config: { systemInstruction: SYSTEM_PROMPT }
-        })
+      await callWithRetry(async () => {
+        const proxyResponse = await fetch(`${proxyUrl}/analyze-briefing`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            messages: [{ role: 'user', parts: [{ text: userMessage }] }],
+            config: { systemInstruction: SYSTEM_PROMPT }
+          })
+        });
+
+        if (!proxyResponse.ok) {
+          const errData = await proxyResponse.json().catch(() => ({}));
+          // Propagate 429/503 status codes for retry logic
+          const error: any = new Error(errData.error || `Proxy Error: ${proxyResponse.status}`);
+          error.status = proxyResponse.status;
+          throw error;
+        }
+
+        const data = await proxyResponse.json();
+        text = data.text;
       });
-
-      if (!proxyResponse.ok) {
-        const errData = await proxyResponse.json().catch(() => ({}));
-        throw new Error(errData.error || `Proxy Error: ${proxyResponse.status}`);
-      }
-
-      const data = await proxyResponse.json();
-      text = data.text;
 
     } else {
-      // Direct Client-Side Call (Fallback)
+      // Direct Client-Side Call (Fallback) with Retry
       // console.warn("Using unsafe client-side API key. Configure VITE_SUPABASE_FUNCTION_URL to secure.");
 
-      response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: userMessage }]
-          }
-        ],
-        config: config
+      await callWithRetry(async () => {
+        response = await ai.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: userMessage }]
+            }
+          ],
+          config: config
+        });
+        text = response.text || '';
       });
-      text = response.text || '';
     }
 
     if (!text) {
