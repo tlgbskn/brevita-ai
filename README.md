@@ -132,7 +132,7 @@ Create a file named .env.local in the project root:
 
 bash
 Copy code
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+VITE_GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 You can obtain a key from Google AI Studio.
 
 ⚠ Never commit your real API key to GitHub.
