@@ -80,7 +80,7 @@ function parseRobustJSON(str: string): any {
  */
 async function callWithRetry<T>(
   fn: () => Promise<T>,
-  retries: number = 3,
+  retries: number = 5,
   initialDelay: number = 2000
 ): Promise<T> {
   let attempt = 0;

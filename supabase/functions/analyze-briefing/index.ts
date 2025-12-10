@@ -53,9 +53,18 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
+    } catch (error: any) {
+        const errorMessage = error.message || "Internal Server Error";
+        let status = 500;
+
+        if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+            status = 429;
+        } else if (errorMessage.includes('503') || errorMessage.includes('Overloaded')) {
+            status = 503;
+        }
+
+        return new Response(JSON.stringify({ error: errorMessage }), {
+            status: status,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
