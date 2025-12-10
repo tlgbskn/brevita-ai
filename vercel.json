@@ -1,0 +1,5 @@
+{
+    "env": {
+        "VITE_GEMINI_API_KEY": "AIzaSyCIa-kJUr-ZauEFv_hm5Z2518XsJZ5ftcY"
+    }
+}
